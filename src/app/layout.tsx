@@ -16,7 +16,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "TrendMatrix — AI Content Idea Engine",
   description:
-    "Discover viral YouTube Shorts, Pinterest trends, and Reddit topics in one AI-powered feed.",
+    "Discover viral YouTube Shorts, Pexels trends, and Reddit topics in one AI-powered feed.",
+  icons: {
+    icon: "/favicon.svg",
+    shortcut: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
