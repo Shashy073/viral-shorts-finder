@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e1b4b"/>
+      <stop offset="100%" stop-color="#0c0a1e"/>
+    </linearGradient>
+    <linearGradient id="arrowGrad" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded square -->
+  <rect width="128" height="128" rx="26" fill="url(#bgGrad)"/>
+  <!-- Subtle border -->
+  <rect width="128" height="128" rx="26" fill="none" stroke="#6366f1" stroke-width="2" opacity="0.4"/>
+  <!-- Trend arrow pointing up-right -->
+  <polyline
+    points="22,96 50,68 72,82 106,36"
+    fill="none"
+    stroke="url(#arrowGrad)"
+    stroke-width="11"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- Arrow head -->
+  <polyline
+    points="84,30 106,36 100,56"
+    fill="none"
+    stroke="url(#arrowGrad)"
+    stroke-width="11"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <!-- Dot on the peak -->
+  <circle cx="106" cy="36" r="7" fill="#22d3ee" opacity="0.9"/>
+</svg>

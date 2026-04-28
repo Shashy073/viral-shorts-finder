@@ -14,13 +14,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TrendMatrix — AI Content Idea Engine",
+  title: "TrendMatrix Pro — AI Content Discovery",
   description:
     "Discover viral YouTube Shorts, Pexels trends, and Reddit topics in one AI-powered feed.",
-  icons: {
-    icon: "/favicon.svg",
-    shortcut: "/favicon.svg",
-  },
+  // icon.svg in src/app/ is auto-detected by Next.js App Router (overrides favicon.ico)
 };
 
 export default function RootLayout({
