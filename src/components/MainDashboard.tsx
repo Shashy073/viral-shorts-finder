@@ -3,13 +3,9 @@
 import { type FormEvent, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Flame,
-  ImageIcon,
-  Newspaper,
   RefreshCw,
   Search,
   Sparkles,
-  Video,
   Zap,
 } from "lucide-react";
 import useSWR from "swr";
@@ -18,13 +14,15 @@ import DetailsModal from "@/components/DetailsModal";
 import TrendCard from "@/components/TrendCard";
 import type { ContentItem, FeedResult } from "@/lib/engine";
 
-// ─── Quick-filter pills ───────────────────────────────────────────────────────
+// ─── Quick-filter definitions ─────────────────────────────────────────────────
 
 const FILTERS = [
-  { label: "Viral", emoji: "🔥", icon: Flame, query: "trending" },
-  { label: "Reels", emoji: "📹", icon: Video, query: "reels" },
-  { label: "Posts", emoji: "📸", icon: ImageIcon, query: "posts" },
-  { label: "Brand News", emoji: "📰", icon: Newspaper, query: "brand news" },
+  { label: "🔥 Viral",      query: "trending"   },
+  { label: "📹 Reels",      query: "reels"      },
+  { label: "📸 Post Ideas", query: "posts"      },
+  { label: "📰 Brand News", query: "brand news" },
+  { label: "🎨 Aesthetic",  query: "aesthetic"  },
+  { label: "💡 Startup",    query: "startup"    },
 ];
 
 // ─── SWR fetcher ──────────────────────────────────────────────────────────────
@@ -35,57 +33,76 @@ const fetcher = (url: string): Promise<FeedResult> =>
     return r.json() as Promise<FeedResult>;
   });
 
-// ─── Skeleton loader ──────────────────────────────────────────────────────────
+// ─── Skeleton heights (varied for masonry illusion) ──────────────────────────
 
 const SKELETON_HEIGHTS = [
-  340, 260, 300, 380, 220, 290, 250, 360, 210, 280, 320, 240,
+  340, 220, 300, 380, 260, 200, 320, 280, 240, 360, 190, 310,
 ];
 
-function SkeletonGrid({ query }: { query: string }) {
+// ─── Pulse scanning animation ─────────────────────────────────────────────────
+
+function PulseScanAnimation({ query }: { query: string }) {
   return (
-    <div>
-      {/* Scanning indicator */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex flex-col items-center gap-3"
-      >
-        <div className="flex items-center gap-3 rounded-full border border-indigo-800/40 bg-indigo-950/60 px-5 py-2.5 backdrop-blur-sm">
+    <motion.div
+      initial={{ opacity: 0, y: -6 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mb-8"
+    >
+      {/* Sweeping scan bar */}
+      <div className="mb-5 h-px w-full overflow-hidden rounded-full bg-white/5">
+        <div className="scan-sweep-bar h-full rounded-full bg-gradient-to-r from-transparent via-indigo-500 to-transparent" />
+      </div>
+
+      {/* Thinking indicator */}
+      <div className="flex flex-col items-center gap-3">
+        <div className="flex items-center gap-3 rounded-2xl border border-indigo-800/30 bg-indigo-950/40 px-5 py-3 backdrop-blur-sm">
+          {/* 4 bouncing dots */}
           <div className="flex gap-1.5">
-            {[0, 1, 2].map((i) => (
+            {[0, 1, 2, 3].map((i) => (
               <span
                 key={i}
-                className="block h-2 w-2 rounded-full bg-indigo-400"
-                style={{
-                  animation: `bounce 0.9s ease-in-out ${i * 0.18}s infinite`,
-                }}
+                className="block h-1.5 w-1.5 rounded-full bg-indigo-500"
+                style={{ animation: `bounce 1s ease-in-out ${i * 0.14}s infinite` }}
               />
             ))}
           </div>
-          <span className="text-sm font-medium text-indigo-300">
-            Scanning the social web for{" "}
+          <span className="text-sm text-slate-400">
+            AI scanning{" "}
             <span className="font-bold text-white">
               &ldquo;{query}&rdquo;
-            </span>
-            ...
+            </span>{" "}
+            across YouTube · Pexels · Reddit · NewsData
           </span>
         </div>
-      </motion.div>
 
-      {/* Shimmer skeleton masonry */}
-      <div className="columns-1 gap-4 md:columns-2 lg:columns-3 xl:columns-4">
+        {/* Status labels */}
+        <div className="flex flex-wrap justify-center gap-2">
+          {["YouTube Shorts", "Pexels Photos", "Reddit Trends", "News Headlines", "AI Synthesis"].map(
+            (src, i) => (
+              <span
+                key={src}
+                className="rounded-full border border-white/5 bg-white/3 px-2.5 py-0.5 text-[10px] font-medium text-slate-600"
+                style={{ animation: `bounce 1.4s ease-in-out ${i * 0.25}s infinite` }}
+              >
+                {src}
+              </span>
+            ),
+          )}
+        </div>
+      </div>
+
+      {/* Shimmer skeleton masonry grid */}
+      <div className="mt-8 columns-1 gap-4 md:columns-2 lg:columns-3 xl:columns-4">
         {SKELETON_HEIGHTS.map((h, i) => (
           <div key={i} className="mb-4 break-inside-avoid">
             <div
-              className="w-full overflow-hidden rounded-2xl"
+              className="skeleton-shimmer w-full rounded-2xl"
               style={{ height: h }}
-            >
-              <div className="h-full w-full animate-pulse bg-gradient-to-br from-slate-800/80 via-slate-800/40 to-slate-900/80" />
-            </div>
+            />
           </div>
         ))}
       </div>
-    </div>
+    </motion.div>
   );
 }
 
@@ -108,10 +125,10 @@ function Toolbar({
   const realCount = (data?.items.length ?? 0) - syntheticCount;
 
   return (
-    <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500">
         {error ? (
-          <span className="text-red-400">Something went wrong.</span>
+          <span className="text-red-400">Something went wrong. Try again.</span>
         ) : data ? (
           <>
             <span>
@@ -122,18 +139,18 @@ function Toolbar({
               <>
                 <span className="text-slate-700">·</span>
                 <span className="flex items-center gap-1">
-                  <Sparkles className="h-3.5 w-3.5 text-purple-400" />
-                  <span className="font-semibold text-purple-400">
+                  <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+                  <span className="font-semibold text-indigo-400">
                     {syntheticCount}
                   </span>{" "}
-                  AI-generated ideas
+                  AI ideas
                 </span>
               </>
             )}
             {data.intent !== "general" && (
               <>
                 <span className="text-slate-700">·</span>
-                <span className="rounded-full bg-indigo-900/40 px-2 py-0.5 text-[11px] font-semibold capitalize text-indigo-400">
+                <span className="rounded-full bg-indigo-900/30 px-2 py-0.5 text-[11px] font-semibold capitalize text-indigo-400">
                   {data.intent} intent
                 </span>
               </>
@@ -145,7 +162,7 @@ function Toolbar({
       <button
         onClick={onRefresh}
         disabled={isLoading}
-        className="flex items-center gap-2 rounded-xl bg-slate-800/70 px-4 py-2 text-sm font-medium text-slate-400 transition hover:bg-slate-700/80 hover:text-white disabled:opacity-40"
+        className="flex min-h-[44px] items-center gap-2 rounded-xl border border-white/8 bg-white/5 px-4 text-sm font-medium text-slate-400 backdrop-blur-sm transition hover:bg-white/10 hover:text-white disabled:opacity-40 active:scale-95"
       >
         <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
         Refresh
@@ -154,7 +171,7 @@ function Toolbar({
   );
 }
 
-// ─── Feed grid ────────────────────────────────────────────────────────────────
+// ─── Masonry feed grid ────────────────────────────────────────────────────────
 
 function FeedGrid({
   items,
@@ -174,7 +191,7 @@ function FeedGrid({
   );
 }
 
-// ─── Empty state ──────────────────────────────────────────────────────────────
+// ─── Empty / error state ──────────────────────────────────────────────────────
 
 function EmptyState({ onRetry }: { onRetry: () => void }) {
   return (
@@ -183,16 +200,14 @@ function EmptyState({ onRetry }: { onRetry: () => void }) {
         <Search className="h-8 w-8 text-indigo-400" />
       </div>
       <div>
-        <p className="text-base font-semibold text-slate-200">
-          No results found
-        </p>
+        <p className="text-base font-semibold text-slate-200">No results found</p>
         <p className="mt-1.5 text-sm text-slate-500">
           Try a different keyword or category.
         </p>
       </div>
       <button
         onClick={onRetry}
-        className="rounded-xl bg-indigo-600/20 px-5 py-2 text-sm font-semibold text-indigo-400 transition hover:bg-indigo-600/40 hover:text-white"
+        className="min-h-[44px] rounded-xl bg-indigo-600/20 px-6 text-sm font-semibold text-indigo-400 transition hover:bg-indigo-600/40 hover:text-white active:scale-95"
       >
         Try again
       </button>
@@ -205,7 +220,8 @@ function EmptyState({ onRetry }: { onRetry: () => void }) {
 export default function MainDashboard() {
   const [inputValue, setInputValue] = useState("trending");
   const [query, setQuery] = useState("trending");
-  const [activeFilter, setActiveFilter] = useState("Viral");
+  const [activeFilter, setActiveFilter] = useState("🔥 Viral");
+  const [previousQuery, setPreviousQuery] = useState("");
   const [selected, setSelected] = useState<ContentItem | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -220,94 +236,134 @@ export default function MainDashboard() {
     e.preventDefault();
     const q = inputValue.trim() || "trending";
     setQuery(q);
-    // Reset active filter if user types manually
     setActiveFilter("");
   }
 
   function handleFilterClick(label: string, q: string) {
+    const isAlreadyActive = activeFilter === label;
+
+    if (isAlreadyActive) {
+      setActiveFilter("");
+      setInputValue(previousQuery);
+      setQuery(previousQuery);
+      return;
+    }
+
+    setPreviousQuery(inputValue.trim());
     setActiveFilter(label);
     setInputValue(q);
     setQuery(q);
   }
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white">
-      {/* ── Hero ─────────────────────────────────────────────────────────────── */}
-      <header className="relative overflow-hidden pb-12 pt-16">
-        {/* Ambient glow orbs */}
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 overflow-hidden"
-        >
-          <div className="absolute left-1/2 top-0 h-[500px] w-[500px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-700/20 blur-3xl" />
-          <div className="absolute right-1/4 top-10 h-72 w-72 rounded-full bg-violet-700/10 blur-3xl" />
-          <div className="absolute left-1/4 top-20 h-64 w-64 rounded-full bg-emerald-700/8 blur-3xl" />
-        </div>
+    <div className="min-h-screen bg-[#050505] text-white">
 
-        <div className="relative mx-auto max-w-5xl px-4">
-          {/* Brand */}
-          <div className="mb-10 text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-indigo-800/40 bg-indigo-950/50 px-4 py-1.5 text-xs font-semibold text-indigo-300 backdrop-blur-sm">
-              <Zap className="h-3.5 w-3.5 text-emerald-400" />
-              Real-time trend intelligence · Zero-fail AI engine
+      {/* ── Fixed ambient background orbs (purely decorative) ─────────────── */}
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 z-0 overflow-hidden"
+      >
+        <div className="absolute -top-32 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-indigo-700/10 blur-3xl" />
+        <div className="absolute right-0 top-1/3 h-64 w-64 rounded-full bg-violet-700/8 blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 h-48 w-48 rounded-full bg-cyan-700/6 blur-3xl" />
+      </div>
+
+      {/* ── Sticky header block ───────────────────────────────────────────── */}
+      <div
+        className="sticky top-0 z-50 border-b border-white/5 bg-[#050505]/92 backdrop-blur-[12px]"
+      >
+        <div className="mx-auto max-w-screen-xl px-4">
+
+          {/* Brand row */}
+          <div className="flex items-center justify-between py-3">
+            <div className="flex items-center gap-3">
+              {/* Logo */}
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                aria-label="Reload TrendMatrix Pro"
+                className="text-left text-2xl font-black tracking-tight transition hover:text-indigo-300"
+              >
+                Trend
+                <span className="bg-gradient-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+                  Matrix
+                </span>
+                <span className="ml-1.5 text-sm font-semibold text-slate-600">
+                  Pro
+                </span>
+              </button>
+              {/* "AI Engine" badge — hidden on smallest screens */}
+              <div className="hidden items-center gap-1.5 rounded-full border border-indigo-800/40 bg-indigo-950/50 px-3 py-0.5 text-[10px] font-semibold text-indigo-400 sm:flex">
+                <Zap className="h-3 w-3 text-cyan-400" />
+                AI Engine
+              </div>
             </div>
 
-            <h1 className="text-5xl font-black tracking-tight sm:text-6xl lg:text-7xl">
-              Trend
-              <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-emerald-400 bg-clip-text text-transparent">
-                Matrix
-              </span>{" "}
-              <span className="bg-gradient-to-r from-slate-300 to-slate-500 bg-clip-text text-3xl font-semibold text-transparent sm:text-4xl">
-                Pro
-              </span>
-            </h1>
-            <p className="mt-3 text-slate-400">
-              YouTube · Pexels · Reddit · NewsData · AI Synthesis — one
-              discovery engine
-            </p>
+            {/* Scanning pulse indicator */}
+            {isLoading ? (
+              <div className="flex items-center gap-2 text-xs font-medium text-indigo-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-indigo-400 opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-indigo-500" />
+                </span>
+                <span className="hidden sm:block">Scanning…</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1 text-[10px] text-slate-700">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                <span className="hidden sm:block">Live</span>
+              </div>
+            )}
           </div>
 
-          {/* Glassmorphism search bar */}
+          {/* Search bar — full-width on mobile */}
           <form
             onSubmit={handleSubmit}
-            className="mx-auto max-w-2xl"
+            className="pb-3"
             role="search"
             aria-label="Search trends"
           >
-            <div className="relative flex items-center gap-3 overflow-hidden rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-2xl shadow-black/60 backdrop-blur-2xl ring-1 ring-inset ring-white/5 transition-all duration-300 focus-within:border-indigo-500/50 focus-within:ring-indigo-500/20">
-              {/* Inner glow on focus */}
-              <div className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 [div:focus-within_&]:opacity-100">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-indigo-600/5 to-violet-600/5" />
-              </div>
-
-              <Search className="relative h-5 w-5 flex-shrink-0 text-indigo-400" />
+            <div className="flex items-center gap-2 overflow-hidden rounded-2xl border border-white/10 bg-white/5 pl-4 pr-1.5 py-1.5 backdrop-blur-sm transition-all duration-300 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/20">
+              <Search className="h-4 w-4 flex-shrink-0 text-indigo-400" />
               <input
                 ref={inputRef}
                 type="search"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                placeholder='Search any niche, brand, or trend — e.g. "sustainable fashion reels"'
-                className="relative flex-1 bg-transparent text-base text-white placeholder-slate-500 outline-none"
+                onChange={(e) => {
+                  setInputValue(e.target.value);
+                  setPreviousQuery(e.target.value);
+                }}
+                placeholder='e.g. "sustainable fashion reels" or "SaaS brand news"'
+                className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-white placeholder-slate-500 outline-none"
                 maxLength={100}
                 autoComplete="off"
                 spellCheck={false}
               />
+              {/* Mobile — icon-only Generate button (saves space) */}
               <button
                 type="submit"
-                className="relative flex-shrink-0 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-900/50 transition hover:bg-indigo-500 active:scale-95"
+                aria-label="Discover trends"
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-900/50 transition hover:bg-indigo-500 active:scale-95 sm:hidden"
+              >
+                <Zap className="h-4 w-4" />
+              </button>
+              {/* Desktop — text button */}
+              <button
+                type="submit"
+                className="hidden flex-shrink-0 items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2 text-sm font-bold text-white shadow-lg shadow-indigo-900/50 transition hover:bg-indigo-500 active:scale-95 sm:flex"
               >
                 Discover
               </button>
             </div>
           </form>
 
-          {/* Quick-filter pills */}
+          {/* Filter chips — horizontal scroll on mobile, wrap on desktop */}
           <div
-            className="mt-5 flex flex-wrap justify-center gap-2"
+            className="flex gap-2 overflow-x-auto pb-3 scrollbar-hide md:flex-wrap md:justify-start"
             role="group"
             aria-label="Quick filters"
           >
-            {FILTERS.map(({ label, emoji, query: fq }) => {
+            {FILTERS.map(({ label, query: fq }) => {
               const isActive = activeFilter === label;
               return (
                 <button
@@ -315,25 +371,24 @@ export default function MainDashboard() {
                   onClick={() => handleFilterClick(label, fq)}
                   aria-pressed={isActive}
                   className={[
-                    "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200",
+                    "flex flex-shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-all duration-200",
+                    "min-h-[36px]", // comfortable tap target
                     isActive
                       ? "bg-indigo-600 text-white shadow-lg shadow-indigo-900/50 ring-2 ring-indigo-400/30"
-                      : "border border-slate-700/60 bg-slate-800/50 text-slate-400 hover:border-indigo-700/50 hover:bg-slate-700/70 hover:text-slate-200",
+                      : "border border-white/8 bg-white/5 text-slate-400 hover:border-indigo-700/40 hover:bg-white/8 hover:text-slate-200",
                   ].join(" ")}
                 >
-                  <span aria-hidden="true" className="text-base">
-                    {emoji}
-                  </span>
                   {label}
                 </button>
               );
             })}
           </div>
         </div>
-      </header>
+      </div>
 
       {/* ── Feed ─────────────────────────────────────────────────────────────── */}
-      <main className="mx-auto max-w-screen-xl px-4 pb-16">
+      <main className="relative z-10 mx-auto max-w-screen-xl px-4 pb-16 pt-6">
+
         <Toolbar
           data={data}
           error={error}
@@ -341,15 +396,15 @@ export default function MainDashboard() {
           onRefresh={() => void mutate()}
         />
 
-        {/* Skeleton */}
-        {isLoading && <SkeletonGrid query={query} />}
+        {/* Pulse scanning skeleton */}
+        {isLoading && <PulseScanAnimation query={query} />}
 
         {/* Error */}
         {!isLoading && error && (
           <EmptyState onRetry={() => void mutate()} />
         )}
 
-        {/* Results with stagger animation */}
+        {/* Staggered results */}
         <AnimatePresence mode="wait">
           {!isLoading && !error && data && data.items.length > 0 && (
             <motion.div
@@ -357,7 +412,7 @@ export default function MainDashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.25 }}
+              transition={{ duration: 0.2 }}
             >
               <FeedGrid items={data.items} onSelect={setSelected} />
             </motion.div>
@@ -371,15 +426,16 @@ export default function MainDashboard() {
       </main>
 
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
-      <footer className="border-t border-white/5 py-10 text-center">
+      <footer className="relative z-10 border-t border-white/5 py-8 text-center">
         <p className="text-xs text-slate-700">
-          TrendMatrix Pro © {new Date().getFullYear()} · AI-powered content
-          discovery engine · Data from YouTube, Pexels, Reddit &amp; NewsData
+          TrendMatrix Pro &copy; {new Date().getFullYear()} &middot; AI-powered
+          content discovery &middot; YouTube · Pexels · Reddit · NewsData
         </p>
       </footer>
 
-      {/* ── Details Modal ─────────────────────────────────────────────────────── */}
+      {/* ── Details modal ─────────────────────────────────────────────────────── */}
       <DetailsModal item={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
+
