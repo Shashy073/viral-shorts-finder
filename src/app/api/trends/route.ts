@@ -12,7 +12,8 @@ export async function GET(request: NextRequest) {
     const result = await getTrendingContent(query);
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "s-maxage=300, stale-while-revalidate=600",
+        // No CDN caching — each search is unique and manual refresh must be fresh
+        "Cache-Control": "no-store",
       },
     });
   } catch {
